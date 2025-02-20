@@ -1,0 +1,70 @@
+import pandas as pd
+import xml.etree.ElementTree as ET
+
+# Rutas de los archivos
+ruta_excel = r'C:\ACC\CONSOLIDACION_MANZANAS\PRUEBA_19022025\VALIDACION_URBANO\liquidacion_18022025_urbana_manta.xlsx'
+ruta_xml = r'C:\Users\juang\Downloads\Registro_catastral_25436.xml'
+
+# Leer la primera hoja del Excel
+df_excel = pd.read_excel(ruta_excel, sheet_name=0, dtype={'numero_predial': str, 'area_construccion': float})
+
+# Extraer datos relevantes de Excel
+datos_excel = {
+    str(row['numero_predial']): row['area_construccion'] if not pd.isnull(row['area_construccion']) else 0.0
+    for _, row in df_excel.iterrows()
+}
+
+# Parsear el XML
+tree = ET.parse(ruta_xml)
+root = tree.getroot()
+
+datos_xml = {}
+for predio in root.findall('predio'):
+    num_predial = predio.find('codigo_predial_nacional').text.strip()
+    area_construida = predio.find('area_construida').text.strip()
+    
+    if area_construida.lower() == 'none' or area_construida == '':
+        area_construida = 0.0
+    else:
+        area_construida = float(area_construida)
+    
+    datos_xml[num_predial] = area_construida
+
+# Identificar coincidencias y calcular diferencias
+comunes = set(datos_excel.keys()) & set(datos_xml.keys())
+solo_excel = set(datos_excel.keys()) - set(datos_xml.keys())
+solo_xml = set(datos_xml.keys()) - set(datos_excel.keys())
+
+diferencias = []
+for num_predial in comunes:
+    diferencia = abs(datos_excel[num_predial] - datos_xml[num_predial])
+    if diferencia > 0.0:
+        diferencias.append((num_predial, diferencia))
+
+# Imprimir el reporte
+print("REPORTE DE CONTRASTE")
+print(f"Total registros en Excel: {len(datos_excel)}")
+print(f"Total registros en XML: {len(datos_xml)}")
+print(f"Registros en ambas fuentes: {len(comunes)}")
+print(f"Registros solo en Excel: {len(solo_excel)}")
+if solo_excel:
+    print("Lista de registros solo en Excel:", list(solo_excel))
+print(f"Registros solo en XML: {len(solo_xml)}")
+if solo_xml:
+    print("Lista de registros solo en XML:", list(solo_xml))
+
+print("\nDIFERENCIAS EN ÁREA CONSTRUIDA (> 0.0):")
+for num_predial, diferencia in diferencias:
+    print(f"Número Predial: {num_predial} - Diferencia: {diferencia}")
+
+print(f"\n \n")
+print(f"Diferencias en ÁREA CONSTRUIDA (en registros comunes con diferencia igual o superior a 0.5 m2):")
+cont = 0
+for num_predial, diferencia in diferencias:
+    if diferencia >= 0.5:
+        print(f"Número Predial: {num_predial}, Diferencia área construcción: {diferencia}")
+        cont = cont + 1
+    
+print(f"Cantidad de predios con diferencia significativa (en registros comunes con diferencia igual o superior a mil): {cont}")
+
+

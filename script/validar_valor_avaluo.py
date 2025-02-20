@@ -3,7 +3,7 @@ import xml.etree.ElementTree as ET
 
 # Rutas de los archivos
 ruta_excel = r'C:\ACC\CONSOLIDACION_MANZANAS\PRUEBA_19022025\VALIDACION_URBANO\liquidacion_18022025_urbana_manta.xlsx'
-ruta_xml = r'C:\ACC\CONSOLIDACION_MANZANAS\PRUEBA_19022025\VALIDACION_URBANO\predios_v2\predios.xml'
+ruta_xml = r'C:\Users\juang\Downloads\predios.xml'
 
 # Leer Excel (ambas hojas)
 def leer_excel(ruta):
